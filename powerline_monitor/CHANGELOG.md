@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2
+
+- No longer crash-loops when no MQTT broker is available. The add-on now waits
+  and retries every 30s, logging a clear warning, so installing the Mosquitto
+  add-on after starting this one just works.
+
 ## 0.4.1
 
 - Added an early plain-echo startup banner to run.sh to diagnose startup

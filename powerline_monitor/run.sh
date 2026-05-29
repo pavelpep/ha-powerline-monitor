@@ -81,23 +81,32 @@ done < <(jq -r '.station_names[]?' /data/options.json 2>/dev/null)
 
 # ---------------------------------------------------------------------------
 # Resolve MQTT broker: prefer manual settings, else the Mosquitto add-on.
+# Wait for a broker instead of crash-looping, so installing Mosquitto after the
+# add-on is started just works without an error loop.
 # ---------------------------------------------------------------------------
-if bashio::config.has_value 'mqtt_host'; then
-    MQTT_HOST="$(bashio::config 'mqtt_host')"
-    MQTT_PORT="$(bashio::config 'mqtt_port')"
-    MQTT_USER="$(bashio::config 'mqtt_user')"
-    MQTT_PASS="$(bashio::config 'mqtt_password')"
-    bashio::log.info "Using MQTT broker from add-on options: ${MQTT_HOST}:${MQTT_PORT}"
-elif bashio::services.available 'mqtt'; then
-    MQTT_HOST="$(bashio::services 'mqtt' 'host')"
-    MQTT_PORT="$(bashio::services 'mqtt' 'port')"
-    MQTT_USER="$(bashio::services 'mqtt' 'username')"
-    MQTT_PASS="$(bashio::services 'mqtt' 'password')"
-    bashio::log.info "Using MQTT broker from Home Assistant service: ${MQTT_HOST}:${MQTT_PORT}"
-else
-    bashio::log.fatal "No MQTT broker found. Install the Mosquitto add-on or set mqtt_host."
-    exit 1
-fi
+resolve_mqtt() {
+    if bashio::config.has_value 'mqtt_host'; then
+        MQTT_HOST="$(bashio::config 'mqtt_host')"
+        MQTT_PORT="$(bashio::config 'mqtt_port')"
+        MQTT_USER="$(bashio::config 'mqtt_user')"
+        MQTT_PASS="$(bashio::config 'mqtt_password')"
+        bashio::log.info "Using MQTT broker from add-on options: ${MQTT_HOST}:${MQTT_PORT}"
+        return 0
+    elif bashio::services.available 'mqtt'; then
+        MQTT_HOST="$(bashio::services 'mqtt' 'host')"
+        MQTT_PORT="$(bashio::services 'mqtt' 'port')"
+        MQTT_USER="$(bashio::services 'mqtt' 'username')"
+        MQTT_PASS="$(bashio::services 'mqtt' 'password')"
+        bashio::log.info "Using MQTT broker from Home Assistant service: ${MQTT_HOST}:${MQTT_PORT}"
+        return 0
+    fi
+    return 1
+}
+
+until resolve_mqtt; do
+    bashio::log.warning "No MQTT broker yet. Install/start the Mosquitto add-on, or set mqtt_host in options. Retrying in 30s..."
+    sleep 30
+done
 
 mqtt() {
     local args=(-h "${MQTT_HOST}" -p "${MQTT_PORT}")
