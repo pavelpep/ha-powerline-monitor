@@ -49,17 +49,22 @@ Start the add-on and open the **Log** tab. You should see:
 
 ## "No remote stations seen"
 
-This is the switch caveat from open-plc-utils' own docs: topology relies on the
-adapter answering a broadcast management address, and some switches don't flood
-that to every port. The add-on works around this automatically — it reads the
-local adapter's MAC and sends a unicast topology query, which passes through the
-switch normally.
+This is the switch caveat from open-plc-utils' own docs. open-plc-utils' default
+"local" management address (`00:B0:52:00:00:01`) is only delivered to a
+directly-wired adapter — a switch won't forward it. The add-on works around this
+automatically by querying the Ethernet broadcast (`all` / `FF:FF:FF:FF:FF:FF`),
+which switches DO flood, to discover the adapter's real MAC and then query it
+directly. If nothing is discovered it keeps broadcasting every poll.
 
-If auto-detection still fails, name the adapter directly:
+If stations still don't show, name the adapter directly:
 
 1. Find the MAC of the adapter plugged into your switch (printed on the label,
    or in your switch/router MAC table).
 2. Put it in `adapter_mac` and restart.
+
+If even that returns nothing, the switch (or a router in between) is dropping the
+HomePlug management EtherType `0x88E1` entirely — the HA box must share an
+unfiltered Layer 2 segment with an adapter.
 
 ## Notes
 

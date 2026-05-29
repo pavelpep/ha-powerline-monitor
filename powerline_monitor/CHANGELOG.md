@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.6
+
+- Use the Ethernet broadcast ("all") instead of the "local" management address
+  for adapter discovery and queries. Switches forward broadcast but drop the
+  local management address, so adapters behind a switch are now reached. Auto-
+  detects the adapter's real MAC for unicast, and falls back to broadcasting
+  every poll if none is discovered.
+
 ## 0.4.5
 
 - More reliable interface auto-detection: a single physical NIC is now used
