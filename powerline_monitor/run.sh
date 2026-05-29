@@ -181,6 +181,20 @@ if [ "${DIAG}" = "true" ]; then
 
     bashio::log.info "--- 10s capture, HomePlug mgmt only (ether proto 0x88e1) ---"
     timeout 10 tcpdump -i "${IFACE}" -e -n -c 20 'ether proto 0x88e1' 2>&1 | tail -30
+
+    # Active probe: sniff 0x88E1 in the background, fire our own query into it.
+    # - We see OUR tx (src=own MAC) but no reply  -> frames egress, nothing answers
+    #   (adapter not on segment / host bridge eats the reply).
+    # - We see NOTHING at all (not even our tx)   -> raw L2 send blocked inside VM.
+    # - We see a reply (src=other MAC)            -> L2 works; bug is in query parsing.
+    bashio::log.info "--- active probe: capture 0x88e1 while sending a query ---"
+    ( timeout 6 tcpdump -i "${IFACE}" -e -n 'ether proto 0x88e1' 2>&1 | tail -40 ) &
+    TCPD_PID=$!
+    sleep 1
+    plctool -i "${IFACE}" -r -t 800 all >/dev/null 2>&1
+    plcstat -t -i "${IFACE}" all >/dev/null 2>&1
+    wait "${TCPD_PID}"
+    bashio::log.info "(own MAC is ${OWN_MAC:-unknown})"
     bashio::log.info "--- end L2 path checks ---"
 fi
 

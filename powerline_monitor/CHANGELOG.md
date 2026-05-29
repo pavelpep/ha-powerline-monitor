@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.2
+
+- Added an active-probe diagnostic: sniffs `0x88E1` while firing our own query,
+  so the log shows whether our outbound frames even egress the NIC. Splits
+  "raw L2 send blocked in the VM" from "frames leave but nothing answers"
+  without needing host access.
+
 ## 0.5.1
 
 - Added L2-path diagnostics (when `diagnostic` is on): logs whether the chosen
