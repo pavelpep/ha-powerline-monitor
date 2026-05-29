@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+- `adapter_mac` now auto-fills: when left blank, the add-on reads the local
+  adapter's MAC (via the local management address) and uses it as an explicit
+  unicast device. This handles switches that don't flood the broadcast
+  management address, so stations appear without manual configuration.
+
 ## 0.3.1
 
 - Set `init: false` so the base image's bundled s6-overlay runs as PID 1,

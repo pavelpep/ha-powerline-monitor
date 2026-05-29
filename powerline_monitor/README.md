@@ -30,7 +30,7 @@ Rate** for a single number to alert on.
 | Option | What it does |
 |---|---|
 | `interface` | Host NIC the adapter is reachable on. **Leave blank to auto-detect** — the add-on probes each NIC and picks the one a powerline adapter answers on. Set it manually (e.g. `eth0`, `end0` on a Pi) only if detection picks wrong. |
-| `adapter_mac` | MAC of the adapter plugged into your switch. Leave blank to auto-detect. **Set this if no stations show up** (see below). |
+| `adapter_mac` | MAC of the local adapter plugged into your switch. Leave blank to auto-detect (the add-on reads it from the directly-attached adapter). **Only set this manually if auto-detect fails and no stations show up** (see below). |
 | `poll_interval` | Seconds between polls (default 60). |
 | `degraded_threshold` | Mbit/s below which a link is flagged degraded (default 50). |
 | `station_names` | List of `MAC=Name` entries to label adapters, e.g. `AA:BB:CC:DD:EE:FF=Office`. |
@@ -49,15 +49,17 @@ Start the add-on and open the **Log** tab. You should see:
 
 ## "No remote stations seen"
 
-This is the switch caveat from open-plc-utils' own docs. Auto-detection relies
-on the adapter answering a broadcast management address, and some switches don't
-flood that to every port. The fix is to name the adapter directly:
+This is the switch caveat from open-plc-utils' own docs: topology relies on the
+adapter answering a broadcast management address, and some switches don't flood
+that to every port. The add-on works around this automatically — it reads the
+local adapter's MAC and sends a unicast topology query, which passes through the
+switch normally.
+
+If auto-detection still fails, name the adapter directly:
 
 1. Find the MAC of the adapter plugged into your switch (printed on the label,
    or in your switch/router MAC table).
 2. Put it in `adapter_mac` and restart.
-
-A unicast frame to a known MAC passes through the switch normally.
 
 ## Notes
 

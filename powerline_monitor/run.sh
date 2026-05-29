@@ -42,6 +42,29 @@ if [ -z "${IFACE}" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Adapter MAC auto-fill: the local management address (00:B0:52:00:00:01) is
+# answered only by the directly-attached adapter. Grab its real MAC and use it
+# as the explicit device, so unicast topology queries cross switches that don't
+# flood the broadcast management address.
+# ---------------------------------------------------------------------------
+detect_adapter_mac() {
+    plctool -i "${IFACE}" -r -t 300 2>/dev/null \
+      | grep -oiE '[0-9a-f]{2}(:[0-9a-f]{2}){5}' \
+      | grep -ivE '^(00:b0:52:00:00:01|ff:ff:ff:ff:ff:ff|00:00:00:00:00:00)$' \
+      | head -1
+}
+
+if [ -z "${ADAPTER_MAC}" ]; then
+    DETECTED_MAC="$(detect_adapter_mac)"
+    if [ -n "${DETECTED_MAC}" ]; then
+        ADAPTER_MAC="${DETECTED_MAC}"
+        bashio::log.info "Auto-detected local adapter MAC: ${ADAPTER_MAC}"
+    else
+        bashio::log.info "No local adapter MAC detected; querying with the broadcast address. Set 'adapter_mac' manually if no stations appear."
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # Friendly names: station_names entries look like  AA:BB:CC:DD:EE:FF=Kitchen
 # ---------------------------------------------------------------------------
 declare -A NAMES
