@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2
+
+- Fixed malformed JSON in the "Stations" sensor MQTT discovery payload (stray
+  quote) that prevented the sensor from being created.
+
 ## 0.2.1
 
 - Removed deprecated `build.yaml`; base images now resolve from Home Assistant

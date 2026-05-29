@@ -89,7 +89,7 @@ publish_station_discovery() {  # $1 mac  $2 id  $3 name
 
 publish_hub_discovery() {
     mqtt -r -t "${PREFIX}/sensor/powerline_network_stations/config" -m \
-        '{"name":"Stations","uniq_id":"powerline_network_stations","stat_t":"powerline_monitor/network/stations","stat_cla":"measurement","icon":"mdi:lan","'"${COMMON}"','"${HUB_DEV}"'}'
+        '{"name":"Stations","uniq_id":"powerline_network_stations","stat_t":"powerline_monitor/network/stations","stat_cla":"measurement","icon":"mdi:lan",'"${COMMON}"','"${HUB_DEV}"'}'
     mqtt -r -t "${PREFIX}/sensor/powerline_network_worst/config" -m \
         '{"name":"Worst Link Rate","uniq_id":"powerline_network_worst","stat_t":"powerline_monitor/network/worst","unit_of_meas":"Mbit/s","dev_cla":"data_rate","stat_cla":"measurement",'"${COMMON}"','"${HUB_DEV}"'}'
 }
