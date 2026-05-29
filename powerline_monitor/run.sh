@@ -70,23 +70,42 @@ echo "[powerline_monitor] interface resolved: '${IFACE}'" >&2
 # flooded by switches, so we query that to discover the adapter's real MAC and
 # then use it as an explicit unicast device.
 # ---------------------------------------------------------------------------
+OWN_MAC="$(cat "/sys/class/net/${IFACE}/address" 2>/dev/null | tr 'A-Z' 'a-z')"
+
+# Active discovery: ask via Ethernet broadcast and read back a responder's MAC.
 detect_adapter_mac() {
     plctool -i "${IFACE}" -r -t 500 all 2>/dev/null \
       | grep -oiE '[0-9a-f]{2}(:[0-9a-f]{2}){5}' \
-      | grep -ivE '^(00:b0:52:00:00:01|ff:ff:ff:ff:ff:ff|00:00:00:00:00:00)$' \
+      | tr 'A-Z' 'a-z' \
+      | grep -ivE "^(00:b0:52:00:00:01|ff:ff:ff:ff:ff:ff|00:00:00:00:00:00|${OWN_MAC:-zz})$" \
+      | head -1
+}
+
+# Passive discovery: some adapters ignore active queries but still emit HomePlug
+# management frames (EtherType 0x88E1). Sniff for one and take the source MAC.
+sniff_adapter_mac() {
+    timeout 15 tcpdump -i "${IFACE}" -e -l -c 40 'ether proto 0x88e1' 2>/dev/null \
+      | awk '{print $2}' \
+      | grep -oiE '([0-9a-f]{2}:){5}[0-9a-f]{2}' \
+      | tr 'A-Z' 'a-z' \
+      | grep -ivE "^(${OWN_MAC:-zz}|ff:ff:ff:ff:ff:ff|00:00:00:00:00:00)$" \
+      | grep -ivE '^(01:00:5e|33:33|01:80:c2)' \
       | head -1
 }
 
 if [ -z "${ADAPTER_MAC}" ]; then
     DETECTED_MAC="$(detect_adapter_mac)"
+    if [ -z "${DETECTED_MAC}" ]; then
+        bashio::log.info "Active query found nothing; sniffing for HomePlug (0x88E1) frames for ~15s..."
+        DETECTED_MAC="$(sniff_adapter_mac)"
+    fi
     if [ -n "${DETECTED_MAC}" ]; then
         ADAPTER_MAC="${DETECTED_MAC}"
-        bashio::log.info "Auto-detected adapter MAC via broadcast: ${ADAPTER_MAC}"
+        bashio::log.info "Discovered adapter MAC: ${ADAPTER_MAC}"
     else
-        # No unicast MAC found: fall back to broadcasting every poll. Switches
-        # flood this, so it still reaches the adapter across the switch.
+        # Nothing found: fall back to broadcasting every poll. Switches flood it.
         ADAPTER_MAC="all"
-        bashio::log.info "No adapter MAC discovered; using broadcast ('all') for queries. Set 'adapter_mac' manually if no stations appear."
+        bashio::log.warning "No adapter discovered (active or passive). Using broadcast. If still no stations, your switch/router is dropping EtherType 0x88E1, or set adapter_mac manually."
     fi
 fi
 echo "[powerline_monitor] adapter_mac resolved: '${ADAPTER_MAC}'" >&2

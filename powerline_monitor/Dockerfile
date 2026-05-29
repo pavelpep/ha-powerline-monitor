@@ -3,7 +3,7 @@ FROM ${BUILD_FROM}
 
 # Build open-plc-utils, copy the two tools we use, then strip build deps.
 RUN apk add --no-cache --virtual .build build-base linux-headers git \
- && apk add --no-cache mosquitto-clients iproute2 \
+ && apk add --no-cache mosquitto-clients iproute2 tcpdump \
  && git clone --depth 1 https://github.com/qca/open-plc-utils /tmp/oputils \
  && make -C /tmp/oputils \
  && cp /tmp/oputils/plc/plcstat /tmp/oputils/plc/plctool /usr/local/bin/ \

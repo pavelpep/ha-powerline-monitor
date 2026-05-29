@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+- Added passive adapter discovery: if active queries find nothing, the add-on
+  sniffs for HomePlug management frames (EtherType 0x88E1) with tcpdump and uses
+  the source MAC. Helps adapters that ignore active broadcast queries but still
+  emit management traffic. Adds `tcpdump` to the image.
+
 ## 0.4.6
 
 - Use the Ethernet broadcast ("all") instead of the "local" management address
