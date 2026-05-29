@@ -182,19 +182,27 @@ if [ "${DIAG}" = "true" ]; then
     bashio::log.info "--- 10s capture, HomePlug mgmt only (ether proto 0x88e1) ---"
     timeout 10 tcpdump -i "${IFACE}" -e -n -c 20 'ether proto 0x88e1' 2>&1 | tail -30
 
-    # Active probe: sniff 0x88E1 in the background, fire our own query into it.
-    # - We see OUR tx (src=own MAC) but no reply  -> frames egress, nothing answers
-    #   (adapter not on segment / host bridge eats the reply).
-    # - We see NOTHING at all (not even our tx)   -> raw L2 send blocked inside VM.
-    # - We see a reply (src=other MAC)            -> L2 works; bug is in query parsing.
-    bashio::log.info "--- active probe: capture 0x88e1 while sending a query ---"
-    ( timeout 6 tcpdump -i "${IFACE}" -e -n 'ether proto 0x88e1' 2>&1 | tail -40 ) &
+    # Active probe: sniff 0x88E1 to a file in the background, fire our own query
+    # into it, then print a SUMMARY (raw tcpdump flood garbles the HA log UI).
+    # - tx>0, replies=0 -> frames egress, nothing answers (adapter not on segment
+    #   / host bridge eats the reply).
+    # - tx=0            -> raw L2 send blocked inside the VM.
+    # - replies>0       -> L2 works; bug is in the query/parse path.
+    bashio::log.info "--- active probe: 0x88e1 while sending a query (own MAC ${OWN_MAC:-unknown}) ---"
+    PROBE=/tmp/probe88e1.txt
+    timeout 6 tcpdump -i "${IFACE}" -e -n 'ether proto 0x88e1' >"${PROBE}" 2>/dev/null &
     TCPD_PID=$!
     sleep 1
     plctool -i "${IFACE}" -r -t 800 all >/dev/null 2>&1
     plcstat -t -i "${IFACE}" all >/dev/null 2>&1
     wait "${TCPD_PID}"
-    bashio::log.info "(own MAC is ${OWN_MAC:-unknown})"
+    TOTAL="$(grep -c '88e1\|0x88E1\|ethertype' "${PROBE}" 2>/dev/null || echo 0)"
+    SRCS="$(grep -oiE '([0-9a-f]{2}:){5}[0-9a-f]{2} >' "${PROBE}" 2>/dev/null | sed 's/ >//' | tr 'A-Z' 'a-z' | sort -u)"
+    TX="$(printf '%s\n' "${SRCS}" | grep -c "^${OWN_MAC}$" 2>/dev/null || echo 0)"
+    REPLIES="$(printf '%s\n' "${SRCS}" | grep -ivE "^(${OWN_MAC:-zz})$" | grep -c . 2>/dev/null || echo 0)"
+    bashio::log.info "probe: ${TOTAL} total 0x88e1 frames; our-tx-present=${TX}; other-src-count=${REPLIES}"
+    bashio::log.info "probe: distinct source MACs seen:"
+    printf '%s\n' "${SRCS}" | sed 's/^/  - /'
     bashio::log.info "--- end L2 path checks ---"
 fi
 

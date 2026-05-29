@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.3
+
+- Active-probe diagnostic now prints a compact summary (total frame count,
+  whether our own TX egressed, distinct source MACs) instead of raw tcpdump
+  lines, which flooded and garbled the Home Assistant log viewer.
+
 ## 0.5.2
 
 - Added an active-probe diagnostic: sniffs `0x88E1` while firing our own query,
