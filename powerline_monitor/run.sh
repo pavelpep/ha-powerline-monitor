@@ -167,6 +167,21 @@ if [ "${DIAG}" = "true" ]; then
     bashio::log.info "Diagnostic mode on. Network interfaces visible to the add-on:"
     ip -o link | awk -F': ' '{print "  - " $2}'
     bashio::log.info "interface=${IFACE} adapter_mac='${ADAPTER_MAC:-auto}' threshold=${THRESHOLD} Mbit/s"
+
+    # L2 path checks (run once at startup). These answer "is enp1s0 really on the
+    # live segment, and does ANY HomePlug 0x88E1 traffic reach it?"
+    bashio::log.info "--- ${IFACE} link detail (look for 'master <bridge>' = enslaved) ---"
+    ip -d link show "${IFACE}" 2>&1
+    bashio::log.info "--- carrier/state ---"
+    cat "/sys/class/net/${IFACE}/operstate" 2>/dev/null
+    cat "/sys/class/net/${IFACE}/carrier" 2>/dev/null
+
+    bashio::log.info "--- 3s capture, ANY frames on ${IFACE} (proves the iface sees LAN traffic) ---"
+    timeout 3 tcpdump -i "${IFACE}" -n -c 10 2>&1 | tail -20
+
+    bashio::log.info "--- 10s capture, HomePlug mgmt only (ether proto 0x88e1) ---"
+    timeout 10 tcpdump -i "${IFACE}" -e -n -c 20 'ether proto 0x88e1' 2>&1 | tail -30
+    bashio::log.info "--- end L2 path checks ---"
 fi
 
 # Shared availability + device blocks ----------------------------------------

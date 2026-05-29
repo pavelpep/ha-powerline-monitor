@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1
+
+- Added L2-path diagnostics (when `diagnostic` is on): logs whether the chosen
+  NIC is enslaved to a bridge (`master <bridge>`), its carrier/operstate, a 3s
+  any-frame capture (proves the interface sees LAN traffic), and a 10s capture
+  of HomePlug management frames (EtherType 0x88E1). Pinpoints why no stations
+  appear: bridged NIC, dead segment, or no 0x88E1 reaching the host.
+
 ## 0.5.0
 
 - Added passive adapter discovery: if active queries find nothing, the add-on
