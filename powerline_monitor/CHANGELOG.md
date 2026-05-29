@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1
+
+- Added an early plain-echo startup banner to run.sh to diagnose startup
+  exits (distinguishes "script never ran" from "ran then exited").
+
 ## 0.4.0
 
 - `adapter_mac` now auto-fills: when left blank, the add-on reads the local

@@ -2,6 +2,9 @@
 # shellcheck shell=bash
 set -o pipefail
 
+# Plain echo (no bashio) so it shows even if bashio/with-contenv is broken.
+echo "[powerline_monitor] run.sh started" >&2
+
 IFACE="$(bashio::config 'interface')"
 ADAPTER_MAC="$(bashio::config 'adapter_mac')"
 INTERVAL="$(bashio::config 'poll_interval')"
