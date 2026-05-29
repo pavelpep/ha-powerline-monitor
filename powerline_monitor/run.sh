@@ -14,6 +14,34 @@ EXPIRE=$(( INTERVAL * 3 + 10 ))
 AVAIL_TOPIC="powerline_monitor/status"
 
 # ---------------------------------------------------------------------------
+# Interface auto-detection: probe each up host NIC for a powerline adapter by
+# reading its hardware/firmware revision. The NIC the adapter answers on wins.
+# ---------------------------------------------------------------------------
+detect_interface() {
+    local cand
+    for cand in $(ip -o link show up 2>/dev/null \
+                  | awk -F': ' '{print $2}' | sed 's/@.*//' \
+                  | grep -E '^(eth|enp|ens|eno|end)'); do
+        if plctool -i "${cand}" -r -t 300 2>/dev/null \
+           | grep -qiE '[0-9a-f]{2}(:[0-9a-f]{2}){5}'; then
+            echo "${cand}"
+            return 0
+        fi
+    done
+    return 1
+}
+
+if [ -z "${IFACE}" ]; then
+    bashio::log.info "No interface set; probing host NICs for a powerline adapter..."
+    if IFACE="$(detect_interface)"; then
+        bashio::log.info "Auto-detected powerline adapter on interface: ${IFACE}"
+    else
+        IFACE="eth0"
+        bashio::log.warning "No adapter auto-detected; falling back to '${IFACE}'. Set 'interface' manually if this is wrong (turn on diagnostic to list NICs)."
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # Friendly names: station_names entries look like  AA:BB:CC:DD:EE:FF=Kitchen
 # ---------------------------------------------------------------------------
 declare -A NAMES

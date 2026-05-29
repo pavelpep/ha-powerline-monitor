@@ -1,5 +1,5 @@
 name: Powerline Monitor
-version: "0.2.2"
+version: "0.3.0"
 slug: powerline_monitor
 description: >-
   Monitor TP-Link / HomePlug AV2 powerline link rates with open-plc-utils and
@@ -22,7 +22,7 @@ privileged:
 services:
   - mqtt:want
 options:
-  interface: eth0
+  interface: ""
   adapter_mac: ""
   poll_interval: 60
   degraded_threshold: 50
@@ -35,8 +35,8 @@ options:
   mqtt_user: ""
   mqtt_password: ""
 schema:
-  interface: str
-  adapter_mac: str
+  interface: str?
+  adapter_mac: str?
   poll_interval: int(10,)
   degraded_threshold: int(0,)
   station_names:

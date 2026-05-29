@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- `interface` now auto-detects by default: with it left blank, the add-on probes
+  each host NIC and picks the one a powerline adapter responds on. Falls back to
+  `eth0` with a warning if none answer. Set it manually to override.
+- `interface` and `adapter_mac` are now optional in the schema.
+
 ## 0.2.2
 
 - Fixed malformed JSON in the "Stations" sensor MQTT discovery payload (stray

@@ -29,7 +29,7 @@ Rate** for a single number to alert on.
 
 | Option | What it does |
 |---|---|
-| `interface` | Host NIC the adapter is reachable on. Often `eth0`, or `end0` on a Pi. Leave diagnostic on for the first run to see the list. |
+| `interface` | Host NIC the adapter is reachable on. **Leave blank to auto-detect** — the add-on probes each NIC and picks the one a powerline adapter answers on. Set it manually (e.g. `eth0`, `end0` on a Pi) only if detection picks wrong. |
 | `adapter_mac` | MAC of the adapter plugged into your switch. Leave blank to auto-detect. **Set this if no stations show up** (see below). |
 | `poll_interval` | Seconds between polls (default 60). |
 | `degraded_threshold` | Mbit/s below which a link is flagged degraded (default 50). |
@@ -43,7 +43,7 @@ Rate** for a single number to alert on.
 
 Start the add-on and open the **Log** tab. You should see:
 
-- the list of network interfaces (pick the right one for `interface`),
+- which interface was auto-detected (or the list of NICs if you set it manually),
 - the raw `plcstat` output,
 - a line per remote station like `Station Office (AA:BB:..) TX=180 RX=165 Mbit/s degraded=OFF`.
 
