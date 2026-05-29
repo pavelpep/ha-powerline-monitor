@@ -12,6 +12,7 @@ THRESHOLD="$(bashio::config 'degraded_threshold')"
 DIAG="$(bashio::config 'diagnostic')"
 EXPOSE_DIAG="$(bashio::config 'expose_diagnostics')"
 PREFIX="$(bashio::config 'discovery_prefix')"
+echo "[powerline_monitor] config read: iface='${IFACE}' mac='${ADAPTER_MAC}' interval='${INTERVAL}'" >&2
 
 EXPIRE=$(( INTERVAL * 3 + 10 ))
 AVAIL_TOPIC="powerline_monitor/status"
@@ -43,6 +44,7 @@ if [ -z "${IFACE}" ]; then
         bashio::log.warning "No adapter auto-detected; falling back to '${IFACE}'. Set 'interface' manually if this is wrong (turn on diagnostic to list NICs)."
     fi
 fi
+echo "[powerline_monitor] interface resolved: '${IFACE}'" >&2
 
 # ---------------------------------------------------------------------------
 # Adapter MAC auto-fill: the local management address (00:B0:52:00:00:01) is
@@ -66,6 +68,7 @@ if [ -z "${ADAPTER_MAC}" ]; then
         bashio::log.info "No local adapter MAC detected; querying with the broadcast address. Set 'adapter_mac' manually if no stations appear."
     fi
 fi
+echo "[powerline_monitor] adapter_mac resolved: '${ADAPTER_MAC}'" >&2
 
 # ---------------------------------------------------------------------------
 # Friendly names: station_names entries look like  AA:BB:CC:DD:EE:FF=Kitchen
@@ -103,10 +106,13 @@ resolve_mqtt() {
     return 1
 }
 
+echo "[powerline_monitor] resolving MQTT broker..." >&2
 until resolve_mqtt; do
+    echo "[powerline_monitor] no MQTT broker yet; will retry" >&2
     bashio::log.warning "No MQTT broker yet. Install/start the Mosquitto add-on, or set mqtt_host in options. Retrying in 30s..."
     sleep 30
 done
+echo "[powerline_monitor] MQTT resolved: ${MQTT_HOST}:${MQTT_PORT}" >&2
 
 mqtt() {
     local args=(-h "${MQTT_HOST}" -p "${MQTT_PORT}")
@@ -157,6 +163,7 @@ publish_hub_discovery() {
         '{"name":"Worst Link Rate","uniq_id":"powerline_network_worst","stat_t":"powerline_monitor/network/worst","unit_of_meas":"Mbit/s","dev_cla":"data_rate","stat_cla":"measurement",'"${COMMON}"','"${HUB_DEV}"'}'
 }
 
+echo "[powerline_monitor] entering poll loop" >&2
 bashio::log.info "Starting Powerline poll loop every ${INTERVAL}s on ${IFACE}"
 publish_hub_discovery
 

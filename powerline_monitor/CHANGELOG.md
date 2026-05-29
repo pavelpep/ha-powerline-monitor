@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.3
+
+- Added unbuffered stderr checkpoints at each startup stage (config, interface,
+  adapter MAC, MQTT, poll loop) to pinpoint where startup exits, since bashio
+  log output to stdout can be lost when the process exits abruptly.
+
 ## 0.4.2
 
 - No longer crash-loops when no MQTT broker is available. The add-on now waits
