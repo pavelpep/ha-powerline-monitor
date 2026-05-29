@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.4
+
+- Fixed startup crash: bashio enables `set -o errexit`, so the adapter-MAC
+  detection pipeline returning non-zero (no match, or SIGPIPE from `head`) exited
+  the whole script. Disabled errexit — failures are expected and handled inline.
+
 ## 0.4.3
 
 - Added unbuffered stderr checkpoints at each startup stage (config, interface,

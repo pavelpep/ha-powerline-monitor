@@ -1,5 +1,9 @@
 #!/usr/bin/with-contenv bashio
 # shellcheck shell=bash
+# bashio enables `set -o errexit`; disable it. This is a long-running monitor:
+# plctool/plcstat/mosquitto_pub failures and pipelines ending in `head` (SIGPIPE)
+# are expected and handled inline, not fatal.
+set +o errexit
 set -o pipefail
 
 # Plain echo (no bashio) so it shows even if bashio/with-contenv is broken.
