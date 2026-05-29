@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+
+- Set `init: false` so the base image's bundled s6-overlay runs as PID 1,
+  fixing the `s6-overlay-suexec: fatal: can only run as pid 1` startup error.
+
 ## 0.3.0
 
 - `interface` now auto-detects by default: with it left blank, the add-on probes

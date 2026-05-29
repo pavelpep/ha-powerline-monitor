@@ -1,5 +1,5 @@
 name: Powerline Monitor
-version: "0.3.0"
+version: "0.3.1"
 slug: powerline_monitor
 description: >-
   Monitor TP-Link / HomePlug AV2 powerline link rates with open-plc-utils and
@@ -13,6 +13,8 @@ arch:
   - i386
 startup: services
 boot: auto
+# Base image ships s6-overlay as its own init; it must be PID 1.
+init: false
 # Needed so the container can see the real host NIC and send raw L2 frames.
 host_network: true
 privileged:
