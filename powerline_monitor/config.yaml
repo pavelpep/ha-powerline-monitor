@@ -1,5 +1,5 @@
 name: Powerline Monitor
-version: "0.4.4"
+version: "0.4.5"
 slug: powerline_monitor
 description: >-
   Monitor TP-Link / HomePlug AV2 powerline link rates with open-plc-utils and

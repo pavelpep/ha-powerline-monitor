@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.5
+
+- More reliable interface auto-detection: a single physical NIC is now used
+  directly, multi-NIC hosts are probed by any `plctool` response (instead of a
+  brittle MAC regex that missed real adapters), and the fallback is the first
+  physical NIC rather than a hardcoded `eth0`. Also recognise `enx*` NICs.
+
 ## 0.4.4
 
 - Fixed startup crash: bashio enables `set -o errexit`, so the adapter-MAC

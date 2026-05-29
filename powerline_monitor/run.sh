@@ -22,16 +22,28 @@ EXPIRE=$(( INTERVAL * 3 + 10 ))
 AVAIL_TOPIC="powerline_monitor/status"
 
 # ---------------------------------------------------------------------------
-# Interface auto-detection: probe each up host NIC for a powerline adapter by
-# reading its hardware/firmware revision. The NIC the adapter answers on wins.
+# Interface auto-detection. Candidate = an up, physical-looking NIC. A powerline
+# adapter answers `plctool -r` with output, so any non-empty response is a hit.
+# A single candidate is used directly (the common HA-on-x86 case).
 # ---------------------------------------------------------------------------
+list_candidate_nics() {
+    ip -o link show up 2>/dev/null \
+      | awk -F': ' '{print $2}' | sed 's/@.*//' \
+      | grep -E '^(eth|enp|ens|eno|end|enx)'
+}
+
 detect_interface() {
-    local cand
-    for cand in $(ip -o link show up 2>/dev/null \
-                  | awk -F': ' '{print $2}' | sed 's/@.*//' \
-                  | grep -E '^(eth|enp|ens|eno|end)'); do
-        if plctool -i "${cand}" -r -t 300 2>/dev/null \
-           | grep -qiE '[0-9a-f]{2}(:[0-9a-f]{2}){5}'; then
+    local cand nics count
+    nics="$(list_candidate_nics)"
+    count="$(printf '%s\n' "${nics}" | grep -c .)"
+    # Only one physical NIC: it's the one, no need to probe.
+    if [ "${count}" = "1" ]; then
+        printf '%s\n' "${nics}"
+        return 0
+    fi
+    # Several NICs: the one a powerline adapter answers on wins.
+    for cand in ${nics}; do
+        if [ -n "$(plctool -i "${cand}" -r -t 500 2>/dev/null)" ]; then
             echo "${cand}"
             return 0
         fi
@@ -40,12 +52,13 @@ detect_interface() {
 }
 
 if [ -z "${IFACE}" ]; then
-    bashio::log.info "No interface set; probing host NICs for a powerline adapter..."
+    bashio::log.info "No interface set; detecting host NIC for the powerline adapter..."
     if IFACE="$(detect_interface)"; then
-        bashio::log.info "Auto-detected powerline adapter on interface: ${IFACE}"
+        bashio::log.info "Auto-detected interface: ${IFACE}"
     else
-        IFACE="eth0"
-        bashio::log.warning "No adapter auto-detected; falling back to '${IFACE}'. Set 'interface' manually if this is wrong (turn on diagnostic to list NICs)."
+        IFACE="$(list_candidate_nics | head -1)"
+        [ -z "${IFACE}" ] && IFACE="eth0"
+        bashio::log.warning "No adapter clearly detected; using '${IFACE}'. Set 'interface' manually if this is wrong (turn on diagnostic to list NICs)."
     fi
 fi
 echo "[powerline_monitor] interface resolved: '${IFACE}'" >&2
