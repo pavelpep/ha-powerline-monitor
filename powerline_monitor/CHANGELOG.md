@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- Removed deprecated `build.yaml`; base images now resolve from Home Assistant
+  defaults, with a `BUILD_FROM` default in the Dockerfile for standalone builds.
+
 ## 0.2.0
 
 - Added a "Link Degraded" binary sensor per station (device_class problem),
